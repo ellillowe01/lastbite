@@ -1,0 +1,1 @@
+{"firestore":{"rules":"firestore.rules"},"flutter":{"platforms":{"android":{"default":{"projectId":"lastbite-yo","appId":"1:849959450481:android:77c2a7537887a5428128d0","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"lastbite-yo","configurations":{"android":"1:849959450481:android:77c2a7537887a5428128d0"}}}}}}

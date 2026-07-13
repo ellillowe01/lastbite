@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "849959450481",
+    "project_id": "lastbite-yo",
+    "storage_bucket": "lastbite-yo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:849959450481:android:77c2a7537887a5428128d0",
+        "android_client_info": {
+          "package_name": "com.example.lastbite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9eSa7Kk0ONyQYUrh4Svn9-GQQeFmh6PU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
