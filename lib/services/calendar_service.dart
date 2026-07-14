@@ -30,6 +30,22 @@ class CalendarService {
     }
   }
 
+  // Semua id kalender bernama "LastBite" yang ada di HP — bisa lebih dari
+  // satu kalau app pernah ke-reinstall total (mis. gara-gara storage penuh)
+  // dan cache id kalendernya ikut hilang, sehingga kode sempat bikin
+  // kalender baru padahal yang lama masih ada. Dipakai supaya proses hapus
+  // event tetap bisa nemu event lama walau dibuat di kalender "LastBite"
+  // yang berbeda dari yang aktif sekarang.
+  static Future<List<String>> _allLastBiteCalendarIds() async {
+    try {
+      final calendarsResult = await _plugin.retrieveCalendars();
+      final calendars = calendarsResult.data ?? [];
+      return calendars.where((c) => c.name == _calendarName).map((c) => c.id! as String).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   static Future<String?> _getOrCreateCalendarId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -40,7 +56,12 @@ class CalendarService {
 
       if (cached != null && calendars.any((c) => c.id == cached)) return cached;
 
-      final existing = calendars.where((c) => c.name == _calendarName && c.isReadOnly != true);
+      // Kalau ada lebih dari satu kalender "LastBite" (sisa reinstall lama),
+      // pakai yang id-nya paling kecil/paling lama — konsisten di semua
+      // device supaya tidak nambah kalender baru lagi setiap kali cache
+      // hilang.
+      final existing = calendars.where((c) => c.name == _calendarName && c.isReadOnly != true).toList()
+        ..sort((a, b) => a.id!.compareTo(b.id!));
       if (existing.isNotEmpty) {
         await prefs.setString(_calendarIdPrefsKey, existing.first.id!);
         return existing.first.id;
@@ -81,12 +102,7 @@ class CalendarService {
     if (calendarId == null) return null;
 
     if (food.calendarEventId != null) {
-      try {
-        // Dibatasi waktu — di sejumlah device panggilan native ini bisa
-        // hang tanpa pernah throw atau selesai, yang tanpa timeout bakal
-        // bikin seluruh antrean sinkron macet di item ini selamanya.
-        await _plugin.deleteEvent(calendarId, food.calendarEventId).timeout(const Duration(seconds: 5));
-      } catch (_) {}
+      await _deleteEventFromAllCalendars(food.calendarEventId!);
     }
 
     final expiry = food.expiryDate;
@@ -114,11 +130,24 @@ class CalendarService {
   static Future<void> deleteEventForFood(FoodItem food) async {
     final eventId = food.calendarEventId;
     if (eventId == null) return;
-    try {
-      if (!await requestPermissions()) return;
-      final calendarId = await _getOrCreateCalendarId();
-      if (calendarId == null) return;
-      await _plugin.deleteEvent(calendarId, eventId);
-    } catch (_) {}
+    if (!await requestPermissions()) return;
+    await _deleteEventFromAllCalendars(eventId);
+  }
+
+  // Coba hapus id event ini dari SETIAP kalender "LastBite" yang ada (bukan
+  // cuma yang lagi aktif) — event lama bisa nyangkut di kalender "LastBite"
+  // lain kalau cache id kalendernya sempat hilang (mis. app di-reinstall
+  // total). Kebanyakan percobaan akan no-op karena event-nya memang tidak
+  // ada di situ; yang penting yang benar-benar menyimpannya ikut kena.
+  static Future<void> _deleteEventFromAllCalendars(String eventId) async {
+    final ids = await _allLastBiteCalendarIds();
+    for (final calendarId in ids) {
+      try {
+        // Dibatasi waktu — di sejumlah device panggilan native ini bisa
+        // hang tanpa pernah throw atau selesai, yang tanpa timeout bakal
+        // bikin seluruh antrean sinkron macet di item ini selamanya.
+        await _plugin.deleteEvent(calendarId, eventId).timeout(const Duration(seconds: 5));
+      } catch (_) {}
+    }
   }
 }
