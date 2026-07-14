@@ -21,6 +21,7 @@ class AppState extends ChangeNotifier {
   String? _geminiApiKey;
   String? _uid;
   String? _userPhotoUrl;
+  String? _userName;
   StreamSubscription<User?>? _authSub;
 
   List<FoodItem> get foods => _foods;
@@ -31,6 +32,7 @@ class AppState extends ChangeNotifier {
   String? get geminiApiKey => _geminiApiKey;
   bool get isLoggedIn => _uid != null;
   String? get userPhotoUrl => _userPhotoUrl;
+  String get userName => _userName ?? 'LastBite';
 
   // Semua resep: buatan sendiri + resep bawaan
   List<Recipe> get allRecipesCombined => [..._customRecipes, ...allRecipes];
@@ -60,6 +62,7 @@ class AppState extends ChangeNotifier {
   Future<void> _onAuthChanged(User? user) async {
     _uid = user?.uid;
     _userPhotoUrl = user?.photoURL;
+    _userName = user?.displayName ?? user?.email?.split('@').first;
     notifyListeners();
     if (user != null) await _syncOnSignIn(user.uid);
   }

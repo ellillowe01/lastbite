@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
                       Text(greeting, style: const TextStyle(fontSize: 12, color: kTextMuted)),
                       ShaderMask(
                         shaderCallback: (b) => kGreenGradient.createShader(b),
-                        child: const Text('LastBite', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
+                        child: Text(state.userName, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
                       ),
                     ]),
                     GestureDetector(
